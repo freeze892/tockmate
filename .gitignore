@@ -1,0 +1,23 @@
+# 依赖与构建产物
+node_modules/
+dist/
+release/
+
+# 本地测试与运行痕迹
+.acceptance/
+*.log
+.probe*.log
+.edge-*
+.webdav*
+.DS_Store
+Thumbs.db
+
+# 本地工作文档（不进公开仓）
+BACKLOG.md
+RETROSPECTIVE.md
+
+# 机器本地配置
+.npmrc
+
+# 杂物
+/1

@@ -1,0 +1,64 @@
+/* TockMate 设计令牌 —— 源自 DESIGN.md（冻结基准） */
+:root {
+  --surface-app:#FFFFFF; --surface-sidebar:#F7F7F8; --surface-hover:#F2F3F5;
+  --surface-selected:#EBF0FE; --surface-elevated:#FFFFFF;
+  --text-primary:#1F2329; --text-secondary:#646A73; --text-tertiary:#8F959E;
+  --border-default:#E5E6EB; --border-subtle:#EFF0F1;
+  --accent:#4772FA; --accent-hover:#3A63E8; --accent-soft:rgba(71,114,250,.15);
+  --p-high:#E5484D; --p-medium:#F5A623; --p-low:#4772FA;
+  --success:#3BA55D;
+  --shadow-pop:0 4px 12px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);
+  --shadow-soft:0 1px 2px rgba(0,0,0,.03),0 2px 8px rgba(0,0,0,.04);
+  --sb:#F7F7F8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-app:#1E1F23; --surface-sidebar:#191A1D; --surface-hover:#2A2B30;
+    --surface-selected:#2A3552; --surface-elevated:#26272C;
+    --text-primary:#E8EAED; --text-secondary:#9AA0A8; --text-tertiary:#6B7078;
+    --border-default:#33353A; --border-subtle:#2A2B30;
+    --accent:#5B84FF; --accent-hover:#4A74F0; --accent-soft:rgba(91,132,255,.18);
+    --p-high:#F2555A; --p-medium:#F0AC3D; --p-low:#5B84FF;
+    --success:#46B56A;
+    --shadow-pop:0 4px 12px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.5);
+    --shadow-soft:0 1px 2px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.25);
+    --sb:#191A1D;
+  }
+}
+/* 显式主题覆盖（设置页选择，auto 时由上面的媒体查询接管） */
+[data-theme="dark"] {
+  --surface-app:#1E1F23; --surface-sidebar:#191A1D; --surface-hover:#2A2B30;
+  --surface-selected:#2A3552; --surface-elevated:#26272C;
+  --text-primary:#E8EAED; --text-secondary:#9AA0A8; --text-tertiary:#6B7078;
+  --border-default:#33353A; --border-subtle:#2A2B30;
+  --accent:#5B84FF; --accent-hover:#4A74F0; --accent-soft:rgba(91,132,255,.18);
+  --p-high:#F2555A; --p-medium:#F0AC3D; --p-low:#5B84FF;
+  --success:#46B56A;
+  --shadow-pop:0 4px 12px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.5);
+  --shadow-soft:0 1px 2px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.25);
+  --sb:#191A1D;
+}
+[data-theme="light"] {
+  --surface-app:#FFFFFF; --surface-sidebar:#F7F7F8; --surface-hover:#F2F3F5;
+  --surface-selected:#EBF0FE; --surface-elevated:#FFFFFF;
+  --text-primary:#1F2329; --text-secondary:#646A73; --text-tertiary:#8F959E;
+  --border-default:#E5E6EB; --border-subtle:#EFF0F1;
+  --accent:#4772FA; --accent-hover:#3A63E8; --accent-soft:rgba(71,114,250,.15);
+  --p-high:#E5484D; --p-medium:#F5A623; --p-low:#4772FA;
+  --success:#3BA55D;
+  --shadow-pop:0 4px 12px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);
+  --shadow-soft:0 1px 2px rgba(0,0,0,.03),0 2px 8px rgba(0,0,0,.04);
+  --sb:#F7F7F8;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body, #app { height:100%; }
+body {
+  font-family:"Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;
+  font-size:14px; color:var(--text-primary); background:var(--surface-app);
+  -webkit-font-smoothing:antialiased; overflow:hidden; user-select:none;
+}
+input, textarea { user-select:text; }
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-thumb { background:rgba(128,128,128,.25); border-radius:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+button { font-family:inherit; }

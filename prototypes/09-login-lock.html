@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>TickMate · 应用锁</title>
+<style>
+:root{
+  --surface-app:#FFFFFF; --surface-sidebar:#F7F7F8; --surface-hover:#F2F3F5;
+  --surface-selected:#EBF0FE; --surface-elevated:#FFFFFF;
+  --text-primary:#1F2329; --text-secondary:#646A73; --text-tertiary:#8F959E;
+  --border-default:#E5E6EB; --border-subtle:#EFF0F1;
+  --accent:#4772FA; --accent-hover:#3A63E8; --accent-soft:rgba(71,114,250,.15);
+  --p-high:#E5484D;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:"Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;font-size:14px;color:var(--text-primary);background:var(--surface-app);-webkit-font-smoothing:antialiased;overflow:hidden}
+.icon{stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.shell{display:grid;grid-template-rows:36px minmax(0,1fr);height:100vh}
+.titlebar{display:flex;align-items:center;background:var(--surface-sidebar);border-bottom:1px solid var(--border-subtle);user-select:none;-webkit-app-region:drag}
+.brand{display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:600;font-size:13px}
+.brand .mark{width:16px;height:16px;border-radius:5px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.win{margin-left:auto;display:flex;height:100%;-webkit-app-region:no-drag}
+.win button{width:44px;height:100%;border:0;background:transparent;color:var(--text-secondary);display:grid;place-items:center;cursor:default}
+.win button:hover{background:var(--surface-hover)}
+.lock-wrap{display:flex;align-items:center;justify-content:center}
+.lock-card{width:360px;text-align:center;padding:44px 40px 36px;border:1px solid var(--border-default);border-radius:14px;background:var(--surface-elevated);box-shadow:0 4px 12px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08)}
+.lock-avatar{width:64px;height:64px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin:0 auto 16px}
+.lock-avatar svg{width:30px;height:30px;stroke-width:1.6}
+.lock-card h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.lock-card .sub{font-size:13px;color:var(--text-secondary);margin-top:6px}
+.pwd-row{display:flex;align-items:center;gap:10px;margin-top:26px;border:1px solid var(--border-default);border-radius:8px;padding:0 12px;height:44px;background:var(--surface-app)}
+.pwd-row:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pwd-row svg{color:var(--text-tertiary)}
+.pwd-row input{flex:1;border:0;background:transparent;outline:none;font-size:14px;color:var(--text-primary);letter-spacing:.2em}
+.pwd-row input::placeholder{letter-spacing:normal;color:var(--text-tertiary)}
+.unlock-btn{margin-top:14px;width:100%;height:42px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-size:14px;font-weight:500;cursor:default}
+.unlock-btn:hover{background:var(--accent-hover)}
+.unlock-btn:active{transform:scale(.98)}
+.error{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-size:12.5px;color:var(--p-high);min-height:18px}
+.error svg{width:13px;height:13px;stroke-width:2}
+.hint{margin-top:22px;font-size:12px;color:var(--text-tertiary);line-height:1.7}
+.hint kbd{font-family:"Cascadia Mono","Consolas",monospace;font-size:11px;border:1px solid var(--border-default);border-radius:4px;background:var(--surface-sidebar);padding:1px 5px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-logo" viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/><path d="M12 14.5v2"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="14" r="4"/><path d="M11 11l8-8M17 7l2.5 2.5M14.5 9.5L17 12"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v5M12 15.8v.2"/></symbol>
+<symbol id="i-min" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
+<symbol id="i-max" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+</defs></svg>
+
+<div class="shell">
+  <div class="titlebar">
+    <div class="brand"><span class="mark"><svg class="icon" width="14" height="14" style="stroke-width:2.5"><use href="#i-logo"/></svg></span>TickMate</div>
+    <div class="win">
+      <button><svg class="icon" width="16" height="16"><use href="#i-min"/></svg></button>
+      <button><svg class="icon" width="16" height="16"><use href="#i-max"/></svg></button>
+      <button><svg class="icon" width="16" height="16"><use href="#i-x"/></svg></button>
+    </div>
+  </div>
+
+  <div class="lock-wrap">
+    <div class="lock-card">
+      <div class="lock-avatar"><svg class="icon"><use href="#i-lock"/></svg></div>
+      <h1>TickMate 已锁定</h1>
+      <div class="sub">输入密码解锁你的任务</div>
+      <div class="pwd-row">
+        <svg class="icon" width="16" height="16"><use href="#i-key"/></svg>
+        <input type="password" value="tickmate123" autofocus>
+      </div>
+      <button class="unlock-btn">解锁</button>
+      <div class="error"><svg class="icon"><use href="#i-alert"/></svg>密码不正确，请重试</div>
+      <div class="hint">密码在 设置 → 应用锁 中管理<br>忘记密码：退出后删除数据目录下 <kbd>data.json</kbd> 与 <kbd>.bak</kbd> 重置</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

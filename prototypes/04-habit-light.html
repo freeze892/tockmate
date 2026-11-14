@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>TickMate · 习惯打卡</title>
+<style>
+:root{
+  --surface-app:#FFFFFF; --surface-sidebar:#F7F7F8; --surface-hover:#F2F3F5;
+  --surface-selected:#EBF0FE; --surface-elevated:#FFFFFF;
+  --text-primary:#1F2329; --text-secondary:#646A73; --text-tertiary:#8F959E;
+  --border-default:#E5E6EB; --border-subtle:#EFF0F1;
+  --accent:#4772FA; --accent-hover:#3A63E8; --accent-soft:rgba(71,114,250,.12);
+  --success:#3BA55D;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:"Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;font-size:14px;color:var(--text-primary);background:var(--surface-app);-webkit-font-smoothing:antialiased;overflow:hidden}
+.icon{width:24px;height:24px;flex:none;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.icon.sm{width:16px;height:16px}
+.icon.xs{width:14px;height:14px}
+.shell{display:grid;grid-template-rows:36px minmax(0,1fr);height:100vh}
+.body{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:0}
+.titlebar{display:flex;align-items:center;background:var(--surface-sidebar);border-bottom:1px solid var(--border-subtle);user-select:none}
+.titlebar .brand{display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:600;font-size:13px}
+.titlebar .brand .mark{width:16px;height:16px;border-radius:5px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.titlebar .win{margin-left:auto;display:flex;height:100%}
+.titlebar .win button{width:44px;height:100%;border:0;background:transparent;color:var(--text-secondary);display:grid;place-items:center;cursor:pointer}
+.titlebar .win button:hover{background:var(--surface-hover)}
+.titlebar .win button.close:hover{background:#E5484D;color:#fff}
+.sidebar{background:var(--surface-sidebar);border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;min-height:0;padding:12px 8px 8px}
+.search{display:flex;align-items:center;gap:8px;height:32px;margin:0 4px 12px;padding:0 10px;border-radius:6px;background:var(--surface-hover);color:var(--text-tertiary);font-size:13px}
+.nav{flex:1;overflow:auto;min-height:0}
+.group-label{padding:8px 12px 4px;font-size:11px;font-weight:600;color:var(--text-tertiary);letter-spacing:.05em}
+.nav-item{display:flex;align-items:center;gap:10px;height:32px;padding:0 12px;border-radius:6px;color:var(--text-primary);cursor:default;font-size:14px}
+.nav-item .icon{color:var(--text-secondary)}
+.nav-item:hover{background:var(--surface-hover)}
+.nav-item.selected{background:var(--surface-selected);color:var(--accent);font-weight:500}
+.nav-item.selected .icon{color:var(--accent)}
+.nav-item .count{margin-left:auto;font-size:12px;color:var(--text-tertiary)}
+.nav-item .count.badge{color:var(--accent);font-weight:600}
+.ldot{width:8px;height:8px;border-radius:50%;flex:none;margin:0 8px 0 4px}
+.side-foot{border-top:1px solid var(--border-subtle);padding-top:6px;margin-top:6px;display:flex;flex-direction:column}
+
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.main-head{display:flex;align-items:flex-end;gap:12px;padding:20px 24px 16px}
+.main-head h1{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.main-head .sub{font-size:13px;color:var(--text-secondary);padding-bottom:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;border-radius:6px;font-size:13px;border:1px solid transparent;cursor:default;font-weight:500}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn:active{transform:scale(.98)}
+.content{flex:1;overflow:auto;min-height:0;padding:0 24px 24px;max-width:860px}
+
+.summary{display:flex;align-items:center;gap:16px;border:1px solid var(--border-default);border-radius:10px;padding:16px 20px;margin-bottom:20px;background:var(--surface-elevated)}
+.summary .big{font-size:26px;font-weight:600;letter-spacing:-.01em}
+.summary .big em{font-style:normal;font-size:14px;font-weight:400;color:var(--text-secondary)}
+.summary .lab{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.summary .track{flex:1;height:6px;border-radius:3px;background:var(--border-subtle);overflow:hidden}
+.summary .fill{width:50%;height:100%;background:var(--success);border-radius:3px}
+.summary .msg{font-size:13px;color:var(--text-secondary)}
+
+.habit{display:flex;align-items:center;gap:16px;border:1px solid var(--border-default);border-radius:10px;padding:16px 20px;margin-bottom:12px;background:var(--surface-elevated)}
+.habit:hover{box-shadow:0 1px 2px rgba(0,0,0,.03),0 2px 8px rgba(0,0,0,.04)}
+.hicon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex:none}
+.hicon .icon{width:20px;height:20px;stroke-width:1.75}
+.hinfo{width:168px;min-width:0}
+.hname{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hstreak{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-secondary);margin-top:3px}
+.hstreak .icon{width:13px;height:13px;color:#F5A623}
+.week{display:flex;gap:14px;margin-left:8px}
+.wday{display:flex;flex-direction:column;align-items:center;gap:6px}
+.wday .l{font-size:10px;color:var(--text-tertiary)}
+.wdot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
+.wdot.hit{background:var(--success)}
+.wdot.hit svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.wdot.miss{background:var(--surface-hover)}
+.wdot.today{border:1.5px dashed var(--accent);background:var(--surface-app)}
+.checkbtn{margin-left:auto;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border-default);display:grid;place-items:center;flex:none;color:var(--text-tertiary)}
+.checkbtn .icon{width:20px;height:20px}
+.checkbtn:hover{border-color:var(--accent);color:var(--accent)}
+.checkbtn.done{background:var(--success);border-color:var(--success);color:#fff}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:4px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-logo" viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-week" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3.5 13.5V17a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-3.5"/><path d="M3.5 13.5h4.6l1.4 2.3h5l1.4-2.3h4.6"/><path d="M5.3 13.5L8 6.2A1.6 1.6 0 0 1 9.5 5h5a1.6 1.6 0 0 1 1.5 1.2l2.7 7.3"/></symbol>
+<symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 1.5M9.5 2.5h5M12 2.5V6"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3s5.5 4.2 5.5 9a5.5 5.5 0 0 1-11 0c0-2 1-3.8 2-5 .3 1.2 1 2.3 2 2.5-.5-2.5.5-5 1.5-6.5z"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.07 4.2l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5s6.5 6.6 6.5 11a6.5 6.5 0 0 1-13 0c0-4.4 6.5-11 6.5-11z"/></symbol>
+<symbol id="i-run" viewBox="0 0 24 24"><path d="M9.5 8.5l-3 10M14.5 8.5l3 10M4 8.5h16M6 8.5l1-3.2M18 8.5l-1-3.2M4 8.5v1.8M20 8.5v1.8"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5c-1.8-1.6-4.4-2-8-2v13c3.6 0 6.2.4 8 2 1.8-1.6 4.4-2 8-2v-13c-3.6 0-6.2.4-8 2z"/><path d="M12 6.5v13"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></symbol>
+<symbol id="i-min" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
+<symbol id="i-max" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+</defs></svg>
+
+<div class="shell">
+  <div class="titlebar">
+    <div class="brand"><span class="mark"><svg class="icon xs" style="stroke-width:2.5"><use href="#i-logo"/></svg></span>TickMate</div>
+    <div class="win">
+      <button><svg class="icon sm"><use href="#i-min"/></svg></button>
+      <button><svg class="icon sm"><use href="#i-max"/></svg></button>
+      <button class="close"><svg class="icon sm"><use href="#i-x"/></svg></button>
+    </div>
+  </div>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div class="search"><svg class="icon sm"><use href="#i-search"/></svg>搜索</div>
+      <nav class="nav">
+        <div class="group-label">智能清单</div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-sun"/></svg>今天<span class="count badge">4</span></div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-clock"/></svg>明天<span class="count">2</span></div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-week"/></svg>最近 7 天<span class="count">9</span></div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-inbox"/></svg>全部<span class="count">16</span></div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-done"/></svg>已完成<span class="count">42</span></div>
+        <div class="group-label" style="margin-top:8px">清单</div>
+        <div class="nav-item"><span class="ldot" style="background:#4772FA"></span>工作<span class="count">3</span></div>
+        <div class="nav-item"><span class="ldot" style="background:#64B94C"></span>生活<span class="count">5</span></div>
+        <div class="nav-item"><span class="ldot" style="background:#F5A623"></span>购物<span class="count">4</span></div>
+        <div class="side-foot" style="border:0;padding:0;margin-top:10px">
+          <div class="nav-item"><svg class="icon sm"><use href="#i-timer"/></svg>番茄专注<span class="count">3</span></div>
+          <div class="nav-item selected"><svg class="icon sm"><use href="#i-flame"/></svg>习惯打卡<span class="count">2/4</span></div>
+          <div class="nav-item"><svg class="icon sm"><use href="#i-gear"/></svg>设置</div>
+        </div>
+      </nav>
+    </aside>
+
+    <section class="main">
+      <div class="main-head">
+        <h1>习惯打卡</h1><span class="sub">10月25日 星期日</span>
+        <span class="btn primary" style="margin-left:auto"><svg class="icon sm"><use href="#i-plus"/></svg>新建习惯</span>
+      </div>
+
+      <div class="content">
+        <div class="summary">
+          <div><div class="big">2 <em>/ 4</em></div><div class="lab">今日已完成</div></div>
+          <div class="track"><div class="fill"></div></div>
+          <div class="msg">还差 2 个习惯，加油</div>
+        </div>
+
+        <div class="habit">
+          <span class="hicon" style="background:rgba(46,167,224,.14);color:#2EA7E0"><svg class="icon"><use href="#i-drop"/></svg></span>
+          <div class="hinfo"><div class="hname">喝水 8 杯</div><div class="hstreak"><svg class="icon"><use href="#i-flame"/></svg>连续 21 天</div></div>
+          <div class="week">
+            <div class="wday"><span class="l">一</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">二</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">三</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">四</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">五</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">六</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">日</span><span class="wdot today"></span></div>
+          </div>
+          <span class="checkbtn"><svg class="icon"><use href="#i-check"/></svg></span>
+        </div>
+
+        <div class="habit">
+          <span class="hicon" style="background:rgba(100,185,76,.14);color:#64B94C"><svg class="icon"><use href="#i-run"/></svg></span>
+          <div class="hinfo"><div class="hname">晨跑 30 分钟</div><div class="hstreak"><svg class="icon"><use href="#i-flame"/></svg>连续 12 天</div></div>
+          <div class="week">
+            <div class="wday"><span class="l">一</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">二</span><span class="wdot miss"></span></div>
+            <div class="wday"><span class="l">三</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">四</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">五</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">六</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">日</span><span class="wdot today hit" style="background:var(--success);border:0"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+          </div>
+          <span class="checkbtn done"><svg class="icon"><use href="#i-check"/></svg></span>
+        </div>
+
+        <div class="habit">
+          <span class="hicon" style="background:rgba(154,107,242,.14);color:#9A6BF2"><svg class="icon"><use href="#i-book"/></svg></span>
+          <div class="hinfo"><div class="hname">阅读 30 分钟</div><div class="hstreak"><svg class="icon"><use href="#i-flame"/></svg>连续 5 天</div></div>
+          <div class="week">
+            <div class="wday"><span class="l">一</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">二</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">三</span><span class="wdot miss"></span></div>
+            <div class="wday"><span class="l">四</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">五</span><span class="wdot miss"></span></div>
+            <div class="wday"><span class="l">六</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">日</span><span class="wdot today"></span></div>
+          </div>
+          <span class="checkbtn"><svg class="icon"><use href="#i-check"/></svg></span>
+        </div>
+
+        <div class="habit">
+          <span class="hicon" style="background:rgba(71,114,250,.14);color:#4772FA"><svg class="icon"><use href="#i-moon"/></svg></span>
+          <div class="hinfo"><div class="hname">早睡 23:00 前</div><div class="hstreak"><svg class="icon"><use href="#i-flame"/></svg>连续 33 天</div></div>
+          <div class="week">
+            <div class="wday"><span class="l">一</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">二</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">三</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">四</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">五</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">六</span><span class="wdot hit"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+            <div class="wday"><span class="l">日</span><span class="wdot today hit" style="background:var(--success);border:0"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+          </div>
+          <span class="checkbtn done"><svg class="icon"><use href="#i-check"/></svg></span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</body>
+</html>

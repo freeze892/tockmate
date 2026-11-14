@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>TickMate · 全部视图（含无日期任务）</title>
+<style>
+:root{
+  --surface-app:#FFFFFF; --surface-sidebar:#F7F7F8; --surface-hover:#F2F3F5;
+  --surface-selected:#EBF0FE; --surface-elevated:#FFFFFF;
+  --text-primary:#1F2329; --text-secondary:#646A73; --text-tertiary:#8F959E;
+  --border-default:#E5E6EB; --border-subtle:#EFF0F1;
+  --accent:#4772FA; --accent-hover:#3A63E8; --accent-soft:rgba(71,114,250,.15);
+  --p-high:#E5484D; --p-medium:#F5A623; --p-low:#4772FA;
+  --success:#3BA55D;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:"Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;font-size:14px;color:var(--text-primary);background:var(--surface-app);-webkit-font-smoothing:antialiased;overflow:hidden}
+.icon{width:24px;height:24px;flex:none;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.icon.sm{width:16px;height:16px}
+.icon.xs{width:14px;height:14px}
+.shell{display:grid;grid-template-rows:36px minmax(0,1fr);height:100vh}
+.body{display:grid;grid-template-columns:240px minmax(0,1fr) 320px;min-height:0}
+.titlebar{display:flex;align-items:center;background:var(--surface-sidebar);border-bottom:1px solid var(--border-subtle);user-select:none}
+.titlebar .brand{display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:600;font-size:13px}
+.titlebar .brand .mark{width:16px;height:16px;border-radius:5px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.titlebar .win{margin-left:auto;display:flex;height:100%}
+.titlebar .win button{width:44px;height:100%;border:0;background:transparent;color:var(--text-secondary);display:grid;place-items:center;cursor:pointer}
+.titlebar .win button:hover{background:var(--surface-hover)}
+.titlebar .win button.close:hover{background:#E5484D;color:#fff}
+.sidebar{background:var(--surface-sidebar);border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;min-height:0;padding:12px 8px 8px}
+.search{display:flex;align-items:center;gap:8px;height:32px;margin:0 4px 12px;padding:0 10px;border-radius:6px;background:var(--surface-hover);color:var(--text-tertiary);font-size:13px}
+.nav{flex:1;overflow:auto;min-height:0}
+.group-label{padding:8px 12px 4px;font-size:11px;font-weight:600;color:var(--text-tertiary);letter-spacing:.05em}
+.nav-item{display:flex;align-items:center;gap:10px;height:32px;padding:0 12px;border-radius:6px;color:var(--text-primary);cursor:default;font-size:14px}
+.nav-item .icon{color:var(--text-secondary)}
+.nav-item:hover{background:var(--surface-hover)}
+.nav-item.selected{background:var(--surface-selected);color:var(--accent);font-weight:500}
+.nav-item.selected .icon{color:var(--accent)}
+.nav-item .count{margin-left:auto;font-size:12px;color:var(--text-tertiary)}
+.nav-item .count.badge{color:var(--accent);font-weight:600}
+.ldot{width:8px;height:8px;border-radius:50%;flex:none;margin:0 8px 0 4px}
+.side-foot{border-top:1px solid var(--border-subtle);padding-top:6px;margin-top:6px;display:flex;flex-direction:column}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.main-head{display:flex;align-items:flex-end;gap:16px;padding:18px 24px 10px}
+.main-head h1{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.main-head .sub{font-size:13px;color:var(--text-secondary);margin-left:2px;padding-bottom:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;border-radius:6px;font-size:13px;border:1px solid transparent;cursor:default}
+.btn.primary{background:var(--accent);color:#fff;font-weight:500}
+.tasks{flex:1;overflow:auto;min-height:0;padding:0 12px 16px}
+.lgroup{margin-top:4px}
+.lhead{display:flex;align-items:center;gap:6px;padding:8px 12px 2px;font-size:12px;color:var(--text-secondary);font-weight:600}
+.lhead .icon.xs{color:var(--text-tertiary)}
+.lhead .ln{display:flex;align-items:center;gap:5px}
+.lhead .cnt{margin-left:auto;font-weight:400;color:var(--text-tertiary)}
+.task{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-radius:8px}
+.task:hover{background:var(--surface-hover)}
+.cb{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--text-tertiary);flex:none;margin-top:1px}
+.task:hover .cb{border-color:var(--accent)}
+.tbody{flex:1;min-width:0}
+.ttitle{font-size:14px;line-height:1.5;color:var(--text-primary)}
+.tmeta{display:flex;align-items:center;gap:10px;margin-top:2px;font-size:12px;color:var(--text-tertiary);min-height:17px}
+.tmeta .chip{display:inline-flex;align-items:center;gap:3px}
+.chip.today{color:var(--accent)}
+.chip.tomorrow{color:var(--text-secondary)}
+.chip.someday{color:var(--text-tertiary)}
+.flag{width:14px;height:14px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.flag.high{color:var(--p-high)}.flag.medium{color:var(--p-medium)}.flag.low{color:var(--p-low)}
+.more-tail{display:flex;align-items:center;gap:6px;padding:7px 12px 9px 30px;font-size:12px;color:var(--text-tertiary)}
+.more-tail:hover{color:var(--accent)}
+.detail{border-left:1px solid var(--border-subtle);background:var(--surface-elevated);display:flex;flex-direction:column;min-height:0}
+.detail-head{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-subtle);color:var(--text-secondary)}
+.detail-head .crumb{display:flex;align-items:center;gap:6px;font-size:13px}
+.detail-body{flex:1;overflow:auto;min-height:0;padding:16px 20px}
+.detail-title{font-size:16px;font-weight:600;line-height:1.4;margin-bottom:4px}
+.detail-list{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-tertiary);margin-bottom:14px}
+.fields{display:flex;flex-direction:column}
+.field{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
+.field .icon{color:var(--text-tertiary)}
+.field .flabel{color:var(--text-tertiary);width:44px;flex:none}
+.field .fvalue{color:var(--text-primary)}
+.field .fvalue.muted{color:var(--text-tertiary)}
+.field .chev{margin-left:auto;color:var(--text-tertiary)}
+.detail-note{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--accent-soft);font-size:12px;color:var(--text-secondary);line-height:1.7}
+.detail-note b{color:var(--accent);font-weight:600}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:4px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-logo" viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-week" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5M7.5 13.5h2M11 13.5h2M14.5 13.5h2M7.5 17h2M11 17h2"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3.5 13.5V17a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-3.5"/><path d="M3.5 13.5h4.6l1.4 2.3h5l1.4-2.3h4.6"/><path d="M5.3 13.5L8 6.2A1.6 1.6 0 0 1 9.5 5h5a1.6 1.6 0 0 1 1.5 1.2l2.7 7.3"/></symbol>
+<symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 1.5M9.5 2.5h5M12 2.5V6"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3s5.5 4.2 5.5 9a5.5 5.5 0 0 1-11 0c0-2 1-3.8 2-5 .3 1.2 1 2.3 2 2.5-.5-2.5.5-5 1.5-6.5z"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.07 4.2l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V4.2c0-.4.3-.7.7-.7 4.6-1.4 6.9 2.3 11.6.8.5-.2 1 .2 1 .7v8.4c0 .3-.2.6-.5.7-4.7 1.5-7-2.2-11.6-.8"/><path d="M5.5 21v-8"/></symbol>
+<symbol id="i-chev-d" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+<symbol id="i-min" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
+<symbol id="i-max" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+</defs></svg>
+
+<div class="shell">
+  <div class="titlebar">
+    <div class="brand"><span class="mark"><svg class="icon xs" style="stroke-width:2.5"><use href="#i-logo"/></svg></span>TickMate</div>
+    <div class="win">
+      <button><svg class="icon sm"><use href="#i-min"/></svg></button>
+      <button><svg class="icon sm"><use href="#i-max"/></svg></button>
+      <button class="close"><svg class="icon sm"><use href="#i-x"/></svg></button>
+    </div>
+  </div>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div class="search"><svg class="icon sm"><use href="#i-search"/></svg>搜索</div>
+      <nav class="nav">
+        <div class="group-label">智能清单</div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-sun"/></svg>今天<span class="count badge">4</span></div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-clock"/></svg>明天<span class="count">2</span></div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-week"/></svg>最近 7 天<span class="count">9</span></div>
+        <div class="nav-item selected"><svg class="icon sm"><use href="#i-inbox"/></svg>全部<span class="count badge">12</span></div>
+        <div class="nav-item"><svg class="icon sm"><use href="#i-done"/></svg>已完成<span class="count">42</span></div>
+        <div class="group-label" style="margin-top:8px">清单</div>
+        <div class="nav-item"><span class="ldot" style="background:#4772FA"></span>工作<span class="count">3</span></div>
+        <div class="nav-item"><span class="ldot" style="background:#64B94C"></span>生活<span class="count">5</span></div>
+        <div class="nav-item"><span class="ldot" style="background:#F5A623"></span>购物<span class="count">4</span></div>
+        <div class="side-foot" style="border:0;padding:0;margin-top:10px">
+          <div class="nav-item"><svg class="icon sm"><use href="#i-timer"/></svg>番茄专注<span class="count">3</span></div>
+          <div class="nav-item"><svg class="icon sm"><use href="#i-flame"/></svg>习惯打卡<span class="count">2/4</span></div>
+          <div class="nav-item"><svg class="icon sm"><use href="#i-gear"/></svg>设置</div>
+        </div>
+      </nav>
+    </aside>
+
+    <section class="main">
+      <div class="main-head">
+        <h1>全部</h1><span class="sub">12 个未完成任务</span>
+        <span class="btn primary" style="margin-left:auto"><svg class="icon sm"><use href="#i-plus"/></svg>添加任务</span>
+      </div>
+
+      <div class="tasks">
+        <div class="lgroup">
+          <div class="lhead"><svg class="icon xs"><use href="#i-chev-d"/></svg><span class="ln"><span class="ldot" style="background:#4772FA;margin:0"></span>工作</span><span class="cnt">3</span></div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">写季度周报</div>
+              <div class="tmeta"><span class="chip today"><svg class="icon xs"><use href="#i-clock"/></svg>今天 14:00</span></div>
+            </div>
+            <svg class="flag high" style="margin-left:auto;margin-top:3px"><use href="#i-flag"/></svg>
+          </div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">整理会议纪要模板</div>
+              <div class="tmeta"><span class="chip someday">无日期</span></div>
+            </div>
+          </div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">项目评审会议</div>
+              <div class="tmeta"><span class="chip tomorrow"><svg class="icon xs"><use href="#i-clock"/></svg>明天 10月26日 09:30</span></div>
+            </div>
+            <svg class="flag medium" style="margin-left:auto;margin-top:3px"><use href="#i-flag"/></svg>
+          </div>
+        </div>
+
+        <div class="lgroup">
+          <div class="lhead"><svg class="icon xs"><use href="#i-chev-d"/></svg><span class="ln"><span class="ldot" style="background:#64B94C;margin:0"></span>生活</span><span class="cnt">5</span></div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">给妈妈打电话</div>
+              <div class="tmeta"><span class="chip today"><svg class="icon xs"><use href="#i-clock"/></svg>今天 18:00</span></div>
+            </div>
+            <svg class="flag low" style="margin-left:auto;margin-top:3px"><use href="#i-flag"/></svg>
+          </div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">修剪绿植</div>
+              <div class="tmeta"><span class="chip someday">无日期</span></div>
+            </div>
+          </div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">阅读技术文档</div>
+              <div class="tmeta"><span class="chip someday">无日期</span></div>
+            </div>
+          </div>
+          <div class="more-tail"><svg class="icon xs"><use href="#i-chev-d"/></svg>还有 2 项</div>
+        </div>
+
+        <div class="lgroup">
+          <div class="lhead"><svg class="icon xs"><use href="#i-chev-d"/></svg><span class="ln"><span class="ldot" style="background:#F5A623;margin:0"></span>购物</span><span class="cnt">4</span></div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">购买食材</div>
+              <div class="tmeta"><span class="chip today"><svg class="icon xs"><use href="#i-cal"/></svg>今天</span></div>
+            </div>
+          </div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">买生日礼物</div>
+              <div class="tmeta"><span class="chip tomorrow"><svg class="icon xs"><use href="#i-cal"/></svg>10月28日 周三</span></div>
+            </div>
+          </div>
+          <div class="task">
+            <span class="cb"></span>
+            <div class="tbody">
+              <div class="ttitle">补充洗衣液</div>
+              <div class="tmeta"><span class="chip someday">无日期</span></div>
+            </div>
+          </div>
+          <div class="more-tail"><svg class="icon xs"><use href="#i-chev-d"/></svg>还有 1 项</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="detail">
+      <div class="detail-head">
+        <span class="crumb"><svg class="icon sm"><use href="#i-chev-d"/></svg><span class="ldot" style="background:#64B94C;width:6px;height:6px;margin:0"></span>生活</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-title">修剪绿植</div>
+        <div class="detail-list"><span class="ldot" style="background:#64B94C;width:6px;height:6px;margin:0"></span>生活 · 创建于 10月20日 21:40</div>
+        <div class="fields">
+          <div class="field"><svg class="icon sm"><use href="#i-cal"/></svg><span class="flabel">日期</span><span class="fvalue muted">无日期</span><svg class="icon xs chev"><use href="#i-chev-d"/></svg></div>
+          <div class="field"><svg class="icon sm"><use href="#i-flag"/></svg><span class="flabel">优先级</span><span class="fvalue muted">无</span><svg class="icon xs chev"><use href="#i-chev-d"/></svg></div>
+        </div>
+        <div class="detail-note">
+          <b>无日期任务的显示规则</b><br>
+          · 只出现在「所属清单」和「全部」视图，不会进入今天 / 明天 / 最近 7 天<br>
+          · 不显示在日历格子中（没有可锚定的日期）<br>
+          · 会一直保留，直到勾选完成或设置日期；不会自动隐藏或归档<br>
+          · 在「日期」字段选择日期后，即刻进入对应视图和日历
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</body>
+</html>

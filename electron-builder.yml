@@ -1,0 +1,38 @@
+appId: com.tockmate.app
+productName: TockMate
+copyright: TockMate
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**
+  - electron/**
+  - package.json
+
+extraResources:
+  - from: resources
+    to: .
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  license: build/license.txt
+  runAfterFinish: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: TockMate
+  artifactName: TockMate-Setup-${version}.exe
+  include: build/installer.nsh
+
+npmRebuild: false

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- CSP：脚本只允许本源（渲染层无任何远程内容）；style 需 unsafe-inline 供 Vue 动态样式；
+       connect-src 放行本机 ws/http 仅为 dev HMR 与本地服务，img 放行 data: 为任务图片 -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+  <title>TockMate</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

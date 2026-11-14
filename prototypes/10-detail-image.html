@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>TickMate · 任务详情图片</title>
+<style>
+:root{
+  --surface-app:#FFFFFF; --surface-sidebar:#F7F7F8; --surface-hover:#F2F3F5;
+  --surface-selected:#EBF0FE; --surface-elevated:#FFFFFF;
+  --text-primary:#1F2329; --text-secondary:#646A73; --text-tertiary:#8F959E;
+  --border-default:#E5E6EB; --border-subtle:#EFF0F1;
+  --accent:#4772FA; --accent-hover:#3A63E8; --accent-soft:rgba(71,114,250,.15);
+  --p-high:#E5484D; --p-medium:#F5A623; --p-low:#4772FA;
+  --success:#3BA55D;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:"Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;font-size:14px;color:var(--text-primary);background:var(--surface-app);-webkit-font-smoothing:antialiased;overflow:hidden}
+.icon{stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.shell{display:grid;grid-template-rows:36px minmax(0,1fr);height:100vh}
+.body{display:grid;grid-template-columns:240px minmax(0,1fr) 340px;min-height:0}
+.titlebar{display:flex;align-items:center;background:var(--surface-sidebar);border-bottom:1px solid var(--border-subtle);user-select:none}
+.brand{display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:600;font-size:13px}
+.brand .mark{width:16px;height:16px;border-radius:5px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.ldot{width:8px;height:8px;border-radius:50%;flex:none;margin:0 8px 0 4px}
+.sidebar{background:var(--surface-sidebar);border-right:1px solid var(--border-subtle);padding:12px 8px}
+.nav-item{display:flex;align-items:center;gap:10px;height:32px;padding:0 12px;border-radius:6px;color:var(--text-primary);font-size:14px}
+.nav-item.selected{background:var(--surface-selected);color:var(--accent);font-weight:500}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.main-head{display:flex;align-items:flex-end;gap:16px;padding:20px 24px 10px}
+.main-head h1{font-size:20px;font-weight:600}
+.tasks{flex:1;padding:0 12px}
+.task{display:flex;align-items:flex-start;gap:12px;padding:11px 12px;border-radius:8px}
+.task.selected{background:var(--surface-selected)}
+.task:hover{background:var(--surface-hover)}
+.cb{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--text-tertiary);flex:none;margin-top:1px}
+.ttitle{font-size:14px;line-height:1.5}
+.tmeta{display:flex;gap:10px;margin-top:2px;font-size:12px;color:var(--text-tertiary)}
+.chip.today{color:var(--accent)}
+
+.detail{border-left:1px solid var(--border-subtle);background:var(--surface-elevated);display:flex;flex-direction:column;min-height:0}
+.detail-head{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-subtle);color:var(--text-secondary)}
+.crumb{display:flex;align-items:center;gap:6px;font-size:13px}
+.actions{margin-left:auto;display:flex;gap:2px}
+.iconbtn{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:var(--text-secondary)}
+.iconbtn:hover{background:var(--surface-hover)}
+.detail-body{flex:1;overflow:auto;min-height:0;padding:16px 20px}
+.detail-title{font-size:16px;font-weight:600;line-height:1.4;margin-bottom:4px}
+.detail-list{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-tertiary);margin-bottom:14px}
+.field{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
+.field .flabel{color:var(--text-tertiary);width:40px;flex:none}
+.fvalue.hl{color:var(--accent)}
+
+/* ── 图片区（本原型核心） ── */
+.img-section{padding:14px 0;border-bottom:1px solid var(--border-subtle)}
+.img-head{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px}
+.img-head .icon{color:var(--text-tertiary)}
+.img-head .cnt{margin-left:auto;font-size:12px;color:var(--text-tertiary)}
+.img-frame{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border-default);background:var(--surface-hover);cursor:default}
+.img-frame img{display:block;width:100%;max-height:220px;object-fit:cover}
+.img-ops{position:absolute;top:8px;right:8px;display:flex;gap:6px;opacity:1}
+.img-frame:hover .img-ops{opacity:1}
+.img-ops button{width:28px;height:28px;border:0;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;cursor:default;padding:0}
+.img-ops button:hover{background:rgba(0,0,0,.75)}
+.img-ops button.del:hover{background:var(--p-high)}
+.img-meta{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11.5px;color:var(--text-tertiary);flex-wrap:wrap;row-gap:2px}
+.img-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--text-tertiary)}
+.img-meta .nowrap{white-space:nowrap}
+.img-meta .hint-cell{margin-left:auto;color:var(--accent)}
+/* 空态 */
+.img-empty{border:1.5px dashed var(--border-default);border-radius:10px;padding:22px 16px;text-align:center;color:var(--text-tertiary);font-size:12.5px;line-height:1.8;cursor:default}
+.img-empty:hover{border-color:var(--accent);color:var(--text-secondary);background:var(--surface-hover)}
+.img-empty svg{width:26px;height:26px;color:var(--text-tertiary);margin-bottom:6px}
+.img-empty .kbd{font-family:"Cascadia Mono","Consolas",monospace;font-size:11px;border:1px solid var(--border-default);border-radius:4px;background:var(--surface-sidebar);padding:1px 5px;margin:0 2px;color:var(--text-secondary)}
+
+.subtasks{padding:12px 0;border-bottom:1px solid var(--border-subtle)}
+.sub-head{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:2px}
+.sub-head .pct{margin-left:auto;font-size:12px;color:var(--text-tertiary)}
+.subtask{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:14px}
+.subtask .cb{width:16px;height:16px;margin:0}
+.note-area{padding:14px 0;font-size:13px;color:var(--text-tertiary);display:flex;gap:10px}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:4px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-logo" viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></symbol>
+<symbol id="i-img" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.8"/><path d="M4.5 17l4.8-4.8 3.4 3.4 3.5-3.5 3.3 3.3"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6V4.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V6M6.5 6.5l.8 12a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4l.8-12"/></symbol>
+<symbol id="i-replace" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v4h-4"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4.5v11M7 11l5 5 5-5M5 20h14"/></symbol>
+<symbol id="i-subtask" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4 6.5h.01M4 12h.01M4 17.5h.01" stroke-width="2.5"/></symbol>
+<symbol id="i-note" viewBox="0 0 24 24"><path d="M19.5 14v4.5a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5v-13A1.5 1.5 0 0 1 6 4h7"/><path d="M19.7 8.1l-4-4L9 10.8 8.5 14l3.2-.5z"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r=".8" fill="currentColor"/><circle cx="12" cy="12" r=".8" fill="currentColor"/><circle cx="18.5" cy="12" r=".8" fill="currentColor"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-chev-d" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol>
+</defs></svg>
+
+<div class="shell">
+  <div class="titlebar">
+    <div class="brand"><span class="mark"><svg class="icon" width="14" height="14" style="stroke-width:2.5"><use href="#i-logo"/></svg></span>TickMate</div>
+  </div>
+  <div class="body">
+    <aside class="sidebar">
+      <div class="nav-item selected"><span class="ldot" style="background:#4772FA"></span>工作</div>
+      <div class="nav-item"><span class="ldot" style="background:#64B94C"></span>生活</div>
+    </aside>
+
+    <section class="main">
+      <div class="main-head"><h1>工作</h1></div>
+      <div class="tasks">
+        <div class="task"><span class="cb"></span><div><div class="ttitle">写季度周报</div><div class="tmeta"><span class="chip today">今天 14:00</span></div></div></div>
+        <div class="task selected"><span class="cb"></span><div><div class="ttitle">装修方案确认</div><div class="tmeta"><span class="chip today">今天 18:00</span></div></div></div>
+      </div>
+    </section>
+
+    <aside class="detail">
+      <div class="detail-head">
+        <span class="crumb"><span class="ldot" style="background:#4772FA;width:6px;height:6px;margin:0"></span>工作</span>
+        <div class="actions">
+          <span class="iconbtn"><svg class="icon" width="16" height="16"><use href="#i-more"/></svg></span>
+          <span class="iconbtn"><svg class="icon" width="16" height="16"><use href="#i-x"/></svg></span>
+        </div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-title">装修方案确认</div>
+        <div class="detail-list"><span class="ldot" style="background:#4772FA;width:6px;height:6px;margin:0"></span>工作 · 创建于 10月28日 20:15</div>
+        <div class="field"><span class="flabel">日期</span><span class="fvalue hl">今天 10月28日 18:00</span></div>
+
+        <!-- 图片区：已附着 1 张 -->
+        <div class="img-section">
+          <div class="img-head">
+            <svg class="icon" width="15" height="15"><use href="#i-img"/></svg>图片
+            <span class="cnt">1/1</span>
+          </div>
+          <div class="img-frame">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iMjcwIj48cmVjdCB3aWR0aD0iNjQwIiBoZWlnaHQ9IjI3MCIgZmlsbD0iI2Q3ZTNmYiIvPjxjaXJjbGUgY3g9IjEzMCIgY3k9IjgwIiByPSIzMiIgZmlsbD0iI2E4YzBmZiIvPjxwYXRoIGQ9Ik0wIDIzMCBMMTUwIDEyMCBMMjQwIDIwMCBMMzIwIDEzMCBMMzgwIDE5MCBMNDcwIDEwMCBMNjQwIDIzMCBWNzAgVjI3MCBMMCAyNzAgWiIgZmlsbD0iIzkyYjRmZCIvPjwvc3ZnPg==" alt="任务图片">
+            <div class="img-ops">
+              <button title="替换（粘贴或选文件）"><svg class="icon" width="14" height="14"><use href="#i-replace"/></svg></button>
+              <button title="保存到本地"><svg class="icon" width="14" height="14"><use href="#i-down"/></svg></button>
+              <button class="del" title="删除图片（示意：红色态）" style="background:var(--p-high)"><svg class="icon" width="14" height="14"><use href="#i-trash"/></svg></button>
+            </div>
+          </div>
+          <div class="img-meta">
+            <span class="nowrap">装修方案_v3.png</span><span class="dot"></span><span class="nowrap">1200 × 760 · 186 KB</span>
+            <span class="nowrap hint-cell">悬停可操作 · 再贴一张自动替换</span>
+          </div>
+        </div>
+
+        <div class="subtasks">
+          <div class="sub-head">子任务<span class="pct">0/2</span></div>
+          <div class="subtask"><span class="cb"></span>核对尺寸图</div>
+          <div class="subtask"><span class="cb"></span>确认报价明细</div>
+        </div>
+        <div class="note-area"><svg class="icon" width="15" height="15"><use href="#i-note"/></svg>添加备注…</div>
+      </div>
+    </aside>
+  </div>
+</div>
+</body>
+</html>
