@@ -89,38 +89,6 @@
           </div>
         </div>
 
-        <div class="sec-title" v-if="agentAvailable">A G E N T 联 动</div>
-        <div class="card" v-if="agentAvailable">
-          <div class="row" style="align-items:flex-start">
-            <div>
-              <div class="rlab" style="width:auto">Agent 派发</div>
-              <div class="rdesc">标记为 Agent 的任务到点后自动写入派发目录，并按任务「目标」执行对应 Agent 命令，供本地 AI 工具监听执行</div>
-            </div>
-          </div>
-          <div class="row">
-            <div><div class="rlab" style="width:auto">派发目录</div><div class="rdesc">%APPDATA%\TockMate\dispatch\pending\</div></div>
-          </div>
-          <div class="row" style="align-items:flex-start" v-for="a in agentList" :key="a.id">
-            <div style="flex:1;min-width:0">
-              <input class="input" style="margin-bottom:6px" :value="a.name" placeholder="Agent 名称，如：DeepSeek Harness"
-                     @change="agentField(a.id, 'name', $event.target.value)" />
-              <input class="input wide" :value="a.cmd" placeholder="命令模板，含 {file} 与 {title} 占位符；留空则仅写派发文件"
-                     @change="agentField(a.id, 'cmd', $event.target.value)" />
-            </div>
-            <div class="rctrl"><button class="btn ghost" @click="removeAgent(a.id)">删除</button></div>
-          </div>
-          <div class="row" style="align-items:flex-start">
-            <div>
-              <div class="rlab" style="width:auto">预设骨架</div>
-              <div class="rdesc">命令为骨架，请按本机实际安装路径与参数调整</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-                <button v-for="p in AGENT_PRESETS" :key="p.name" class="btn ghost" @click="addAgent(p)">{{ p.name }}</button>
-                <button class="btn ghost" @click="addAgent({ name: '自定义', cmd: '' })">+ 自定义</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="sec-title">关 于</div>
         <div class="card">
           <div class="row">
@@ -289,7 +257,6 @@ const testResult = ref(null)
 const saving = ref(false)
 const syncing = ref(false)
 
-// Agent 派发能力（open-core）：核心版构建无 agent-module，能力恒为 false，设置区块整体隐藏
 const migFileEl = ref(null)
 const migInfo = ref(null)
 const migMsg = ref('')
@@ -314,33 +281,9 @@ function doMigrate () {
   migMsg.value = '已导入 ' + migInfo.value.count + ' 条任务'
   migInfo.value = null
 }
-const agentAvailable = ref(false)
 
-// Agent 列表（完整版）：settings.agents = [{ id, name, cmd }]，同步清洗时整键剔除
-const AGENT_PRESETS = [
-  { name: 'DeepSeek Harness', cmd: 'deepseek-harness --task "{file}"' },
-  { name: 'Trae', cmd: 'trae --auto "{file}"' },
-  { name: 'Qoder', cmd: 'qoder --task "{file}"' },
-  { name: 'Claude Code', cmd: 'claude -p "读取 {file} 并完成其中描述的任务"' },
-  { name: 'Cursor', cmd: 'cursor-agent --task "{file}"' }
-]
-const agentList = computed(() => store.settings.agents || [])
-function addAgent (preset) {
-  const list = [...(store.settings.agents || []), { id: 'ag' + Date.now().toString(36), name: preset.name || '', cmd: preset.cmd || '' }]
-  store.settings.agents = list
-  store.persist()
-}
-function removeAgent (id) {
-  store.settings.agents = (store.settings.agents || []).filter(a => a.id !== id)
-  store.persist()
-}
-function agentField (id, key, val) {
-  store.settings.agents = (store.settings.agents || []).map(a => a.id === id ? { ...a, [key]: val } : a)
-  store.persist()
-}
 onMounted(async () => {
   version.value = await window.api.version()
-  window.api.capabilities().then(c => { agentAvailable.value = !!c.extension }).catch(() => {})
   const cfg = store.settings.webdav || {}
   webdav.value = { enabled: !!cfg.enabled, url: cfg.url || '', username: cfg.username || '', password: '' }
   savedPassword.value = !!cfg.passwordEnc

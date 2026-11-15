@@ -136,7 +136,7 @@ export const useDataStore = defineStore('data', {
       this.persist()
     },
 
-    addTask ({ title, listId, dueDate = null, dueTime = null, priority = 0, note = '', tags = [], repeat = null, agentDispatch = false, agentTarget = '' }) {
+    addTask ({ title, listId, dueDate = null, dueTime = null, priority = 0, note = '', tags = [], repeat = null,  }) {
       const now = Date.now()
       const task = {
         id: genId('t'),
@@ -146,9 +146,6 @@ export const useDataStore = defineStore('data', {
         priority,
         tags: (tags || []).map(t => String(t).trim()).filter(Boolean),
         repeat: repeat ? JSON.parse(JSON.stringify(repeat)) : null,
-        agentDispatch: !!agentDispatch,
-        agentTarget: agentTarget || '',
-        agentStatus: agentDispatch ? 'pending' : null,
         completed: false, completedAt: null,
         reminderMinutes: null,
         subtasks: [],
