@@ -39,6 +39,9 @@ function save () {
     title: p.title,
     dueDate: p.dueDate,
     dueTime: p.dueTime,
+    tags: p.tags,
+    listName: p.listName,
+    repeat: p.repeat,
     listId: null // 快速捕捉统一进入第一个清单（主进程分配）
   })
   hide()

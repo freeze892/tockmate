@@ -1,15 +1,27 @@
 import { todayISO, addDaysISO, nextWeekday, nextMonday, fromISO, toISODate, pad2, weekdayCN, shortDate } from './date'
+import { PRO, applyProSyntax } from '../pro'
 
 const WEEKDAY_MAP = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 日: 0, 天: 0 }
 
 /**
  * 快速添加自然语言解析（滴答清单式）
- * 返回 { title, dueDate: 'YYYY-MM-DD'|null, dueTime: 'HH:mm'|null, parsedLabel }
+ * 返回 { title, dueDate: 'YYYY-MM-DD'|null, dueTime: 'HH:mm'|null, parsedLabel, tags?, listName?, repeat? }
  * 支持日期：今天/明天/后天/大后天/昨天/周X/下周X/X月X日(号)/X号
  * 支持时间：HH:mm、HH：mm、X点半、[下午|晚上|上午|中午]X点[半]
+ * Pro 扩展（完整版启用）：#标签 / /清单名 / *重复（每天|每周X|每月N日|每N天|每年）
  */
 export function parseQuickAdd (raw, today = todayISO()) {
   let text = String(raw || '')
+
+  // Pro 语法扩展（完整版）：必须先于日期解析——*每周一 中的「周一」会被日期规则误吞
+  let pro = {}
+  if (PRO && /\s[#/*]/.test(' ' + text)) {
+    const extracted = applyProSyntax(text)
+    if (extracted.text.trim() || !text.trim()) {
+      text = extracted.text
+      pro = { tags: extracted.tags, listName: extracted.listName, repeat: extracted.repeat }
+    }
+  }
   let dueDate = null
   let dueTime = null
 
@@ -64,5 +76,5 @@ export function parseQuickAdd (raw, today = todayISO()) {
   } else if (dueTime) {
     parsedLabel = dueTime
   }
-  return { title, dueDate, dueTime, parsedLabel }
+  return { title, dueDate, dueTime, parsedLabel, ...pro }
 }

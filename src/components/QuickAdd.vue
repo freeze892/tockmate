@@ -111,12 +111,20 @@ function save () {
   const p = parsed.value
   const title = (manualDate.value || manualTime.value ? text.value : p.title).trim() || (p.title || '').trim()
   if (!title) return
+  let listId = effListId.value
+  if (!listId && p.listName) {
+    // /清单语法：按名匹配，不存在则新建
+    const l = store.lists.find(x => !x.deletedAt && x.name === p.listName)
+    listId = l ? l.id : (store.addList(p.listName), store.lists[store.lists.length - 1].id)
+  }
   store.addTask({
     title,
-    listId: effListId.value,
+    listId,
     dueDate: effDate.value,
     dueTime: effTime.value,
-    priority: effPriority.value
+    priority: effPriority.value,
+    tags: p.tags,
+    repeat: p.repeat
   })
   reset()
   inputEl.value && inputEl.value.focus()

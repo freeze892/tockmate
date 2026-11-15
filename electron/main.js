@@ -614,7 +614,7 @@ ipcMain.handle('app:version', () => app.getVersion())
 ipcMain.handle('update:check', async () => {
   const manifestUrl = 'https://raw.githubusercontent.com/freeze892/tockmate/main/latest.json'
   try {
-    const res = await net.fetch(manifestUrl, { signal: AbortSignal.timeout(10000) }) // net.fetch 走 Chromium 网络栈=跟随系统代理（主进程全局 fetch 是 Node 语义不读系统代理）
+    const res = await net.fetch(manifestUrl, { signal: AbortSignal.timeout(10000) })
     if (!res.ok) return { ok: false, message: '更新服务器暂不可达（' + res.status + '）' }
     const manifest = await res.json()
     const latest = String(manifest.version || '')
@@ -714,12 +714,25 @@ if (!gotLock) {
     ipcMain.handle('quick:add', (_e, payload) => {
       const doc = store.getData()
       const now = Date.now()
+      // /清单语法：按名匹配，不存在则新建（渲染层传 listName；公开核心版不传该字段，逻辑惰性）
+      let listId = payload.listId || (doc.lists.filter(l => !l.deletedAt).sort((a, b) => a.order - b.order)[0] || {}).id || null
+      if (!payload.listId && payload.listName) {
+        const l = doc.lists.find(l => !l.deletedAt && l.name === payload.listName)
+        if (l) listId = l.id
+        else {
+          const nl = { id: 'l-' + now.toString(36) + Math.random().toString(36).slice(2, 6), name: String(payload.listName), color: '#2EA7E0', order: doc.lists.filter(x => !x.deletedAt).length, createdAt: now, updatedAt: now, deletedAt: null }
+          doc.lists.push(nl)
+          listId = nl.id
+        }
+      }
       const t = {
         id: 't-' + now.toString(36) + Math.random().toString(36).slice(2, 6),
         title: String(payload.title || '').trim(),
-        note: '', listId: payload.listId || (doc.lists.filter(l => !l.deletedAt).sort((a, b) => a.order - b.order)[0] || {}).id || null,
+        note: '', listId,
         dueDate: payload.dueDate || null, dueTime: payload.dueTime || null,
-        priority: 0, tags: [], repeat: null,
+        priority: 0,
+        tags: (payload.tags || []).map(x => String(x).trim()).filter(Boolean),
+        repeat: payload.repeat ? JSON.parse(JSON.stringify(payload.repeat)) : null,
         completed: false, completedAt: null, reminderMinutes: null, subtasks: [], hasImage: false,
         createdAt: now, updatedAt: now, deletedAt: null
       }
