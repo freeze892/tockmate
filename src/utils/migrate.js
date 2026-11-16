@@ -67,7 +67,7 @@ export function mapRows (rows) {
     }
     if (!title.trim()) { skipped++; continue }
     const dueDate = parseAnyDate(dateStr)
-    tasks.push({ title: title.trim(), dueDate, listName: (listName || '').trim() || null, note: note || '' })
+    tasks.push({ title: title.trim().slice(0, 200), dueDate, listName: (listName || '').trim().slice(0, 50) || null, note: (note || '').slice(0, 2000) })
   }
   return { source: hasHeader ? '带表头 CSV' : '滴答清单 CSV（无表头）', count: tasks.length, skipped, tasks }
 }

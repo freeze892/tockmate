@@ -112,8 +112,8 @@ function save () {
   const title = (manualDate.value || manualTime.value ? text.value : p.title).trim() || (p.title || '').trim()
   if (!title) return
   let listId = effListId.value
-  if (!listId && p.listName) {
-    // /清单语法：按名匹配，不存在则新建
+  if (p.listName) {
+    // /清单语法优先于 UI 默认选中：按名匹配，不存在则新建
     const l = store.lists.find(x => !x.deletedAt && x.name === p.listName)
     listId = l ? l.id : (store.addList(p.listName), store.lists[store.lists.length - 1].id)
   }
