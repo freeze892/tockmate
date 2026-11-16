@@ -83,7 +83,7 @@ const hasApi = !!window.api
 // 网格行数必须与实际子元素数匹配，否则主体会掉进错误的行（曾致整页内容压进 36px）
 const shellRows = computed(() => hasApi ? '36px minmax(0,1fr)' : 'auto 36px minmax(0,1fr)')
 const pageComponent = computed(() =>
-  ({ pomodoro: PomodoroView, habit: HabitView, settings: SettingsView, stats: StatsView,  })[store.view.id] || StatsView)
+  ({ pomodoro: PomodoroView, habit: HabitView, settings: SettingsView, stats: StatsView })[store.view.id] || StatsView)
 
 // 锁定期间只渲染锁屏（任务数据不可见）
 const showLock = computed(() => hasApi && lockReady.value && lockEnabled.value && locked.value)

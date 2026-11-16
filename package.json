@@ -1,7 +1,7 @@
 {
   "name": "tockmate",
   "productName": "TockMate",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "滴答清单风格的 Windows 本地待办与专注工具",
   "main": "electron/main.js",
   "private": true,
