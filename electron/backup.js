@@ -7,13 +7,17 @@
 const { mergeDocs, isValidDoc } = require('./sync')
 
 function scopeForExport (doc, scope) {
-  if (scope !== 'active') return doc
-  return {
+  const out = scope !== 'active' ? doc : {
     ...doc,
     tasks: (doc.tasks || []).filter(t => !t.completed && !t.deletedAt),
     lists: (doc.lists || []).filter(l => !l.deletedAt),
     habits: (doc.habits || []).filter(h => !h.deletedAt)
   }
+  // 导出剥离授权与试用见证：激活码仅对签发机器有意义，落进可分享的备份文件只有泄露风险
+  const settings = { ...(out.settings || {}) }
+  delete settings.license
+  delete settings._trialStartedAt
+  return { ...out, settings }
 }
 
 /** 将范围内任务的图片读出并嵌入文档（readFn(taskId) → dataURL|null） */

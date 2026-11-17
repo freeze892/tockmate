@@ -36,6 +36,11 @@ contextBridge.exposeInMainWorld('api', {
 
   // 版本与更新
   version: () => ipcRenderer.invoke('app:version'),
+  capabilities: () => ipcRenderer.invoke('app:capabilities'),
+  license: {
+    status: () => ipcRenderer.invoke('license:status'),
+    activate: (code) => ipcRenderer.invoke('license:activate', code)
+  },
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
 

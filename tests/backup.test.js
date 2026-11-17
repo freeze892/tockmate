@@ -33,11 +33,16 @@ describe('scopeForExport', () => {
     expect(out.settings.theme).toBe('light')
   })
 
-  it('all：原样返回（含已完成与已删除，便于完整备份）', () => {
+  it('all：原样返回但剥离授权与试用见证（备份文件不含激活码，不修改原对象）', () => {
     const d = doc()
+    d.settings.license = { code: 'SECRET-CODE' }
+    d.settings._trialStartedAt = 123
     const out = scopeForExport(d, 'all')
     expect(out.tasks.length).toBe(3)
-    expect(out).toEqual(d)
+    expect(out.settings.license).toBeUndefined()
+    expect(out.settings._trialStartedAt).toBeUndefined()
+    expect(out.settings.theme).toBe('light')
+    expect(d.settings.license).toBeDefined()
   })
 })
 

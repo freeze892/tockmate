@@ -3,7 +3,39 @@
     <div class="main-head"><h1>设置</h1></div>
     <div class="content"><div class="col">
       <div class="colL">
-        <div class="sec-title" style="margin-top:4px">外 观</div>
+        <div class="sec-title" style="margin-top:4px" v-if="PRO">授 权 与 试 用</div>
+        <div class="card" v-if="PRO">
+          <div class="row" style="align-items:flex-start">
+            <div>
+              <div class="rlab" style="width:auto">本机机器码</div>
+              <div class="rdesc lic-mono">{{ lic ? lic.machineCode : '…' }}</div>
+              <div class="rdesc">授权与设备一一绑定：把机器码发给开发者换取激活码，粘贴到下方即可。</div>
+            </div>
+            <div class="rctrl"><button class="btn ghost" @click="copyMachine">复制</button></div>
+          </div>
+          <div class="row" style="align-items:flex-start">
+            <div>
+              <div class="rlab" style="width:auto">授权状态</div>
+              <div v-if="lic && lic.activated" class="rdesc" style="color:var(--success)">● 已激活{{ lic.name ? ' · ' + lic.name : '' }}{{ lic.expiresAt ? ' · 有效期至 ' + lic.expiresAt.slice(0, 10) : ' · 永久' }}</div>
+              <div v-else-if="lic && lic.trial && lic.trial.active" class="rdesc">试用期 · 剩余 {{ lic.trial.daysLeft }} 天（全部功能可用）</div>
+              <div v-else-if="lic" class="rdesc" style="color:var(--p-high)">试用已结束 · Pro 功能已锁定，数据完好保留</div>
+              <div v-else class="rdesc">…</div>
+            </div>
+            <div class="rctrl"><button class="btn ghost" @click="refreshLic">刷新</button></div>
+          </div>
+          <div class="row" style="align-items:flex-start">
+            <div class="rlab">激活码</div>
+            <div class="rctrl" style="margin-left:0">
+              <textarea v-model="licCode" class="input wide lic-input" rows="3" placeholder="粘贴开发者签发的激活码"></textarea>
+              <button class="btn primary" @click="doActivate" :disabled="activating || !licCode.trim()">{{ activating ? '验证中…' : '激 活' }}</button>
+            </div>
+          </div>
+          <div class="row" v-if="licMsg">
+            <div class="rctrl" style="margin-left:0"><span class="statusText" :class="{ err: !licOk }" style="white-space:normal">{{ licMsg }}</span></div>
+          </div>
+        </div>
+
+        <div class="sec-title">外 观</div>
         <div class="card">
           <div class="row">
             <div class="rlab">主题</div>
@@ -223,6 +255,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import Icon from './Icon.vue'
 import { BRAND as brand } from '../brand'
 import { useDataStore } from '../stores/data'
+import { PRO } from '../pro'
 import { parseCSV } from '../utils/csv'
 import { mapRows } from '../utils/migrate'
 
@@ -257,6 +290,7 @@ const testResult = ref(null)
 const saving = ref(false)
 const syncing = ref(false)
 
+// ── 迁移导入（免费）：CSV 选择与解析 ──
 const migFileEl = ref(null)
 const migInfo = ref(null)
 const migMsg = ref('')
@@ -281,9 +315,50 @@ function doMigrate () {
   migMsg.value = '已导入 ' + migInfo.value.count + ' 条任务'
   migInfo.value = null
 }
+// ── 授权（Pro）：机器码展示 / 激活码粘贴验证 / 试用状态，均由主进程验签驱动 ──
+// lic 从 store 派生：刷新/激活都会经 store.refreshCapabilities() 回写 proInfo，
+// 保证侧栏置灰、Pro 视图锁定、联动区块等运行时门控与本卡片同步
+const lic = computed(() => store.proInfo)
+const licCode = ref('')
+const licMsg = ref('')
+const licOk = ref(false)
+const activating = ref(false)
+async function refreshLic () {
+  await store.refreshCapabilities()
+}
+async function doActivate () {
+  activating.value = true
+  licMsg.value = ''
+  try {
+    const r = await window.api.license.activate(licCode.value)
+    licOk.value = !!r.ok
+    licMsg.value = r.ok ? '激活成功，Pro 功能已解锁' : (r.reason || '激活失败')
+    if (r.ok) {
+      licCode.value = ''
+      await refreshLic()
+    }
+  } catch (err) {
+    licOk.value = false
+    licMsg.value = '激活失败：' + String(err && err.message || err).slice(0, 80)
+  }
+  activating.value = false
+}
+async function copyMachine () {
+  if (!lic.value) return
+  try {
+    await navigator.clipboard.writeText(lic.value.machineCode)
+    licOk.value = true
+    licMsg.value = '机器码已复制到剪贴板'
+  } catch {
+    licOk.value = false
+    licMsg.value = '复制失败，请手动选择复制'
+  }
+}
+
 
 onMounted(async () => {
   version.value = await window.api.version()
+  if (PRO) refreshLic()
   const cfg = store.settings.webdav || {}
   webdav.value = { enabled: !!cfg.enabled, url: cfg.url || '', username: cfg.username || '', password: '' }
   savedPassword.value = !!cfg.passwordEnc
@@ -456,6 +531,8 @@ onBeforeUnmount(() => window.removeEventListener('click', onOutsideClose))
 .col{max-width:1040px;display:grid;grid-template-columns:440px minmax(0,1fr);gap:20px;align-items:start}
 .sec-title{font-size:11px;font-weight:600;color:var(--text-tertiary);letter-spacing:.05em;margin:14px 0 8px}
 .card{border:1px solid var(--border-default);border-radius:10px;background:var(--surface-elevated)}
+.lic-mono{font-family:"Cascadia Mono","Consolas",monospace;font-size:14px;letter-spacing:.06em;color:var(--text-primary);user-select:text}
+.lic-input{font-family:"Cascadia Mono","Consolas",monospace;font-size:12px;resize:vertical;line-height:1.5}
 .row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border-subtle)}
 .row:last-child{border-bottom:0}
 .rlab{font-size:13px;color:var(--text-primary);font-weight:500;width:88px;flex:none}

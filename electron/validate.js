@@ -17,7 +17,7 @@ function cmdQuote (s) {
 }
 
 /** 同步远端 settings 中「仅本机」的键：远端值永远不落地，保留本地值 */
-const LOCAL_ONLY_SETTINGS = ['autoRunCommand', 'agents', 'quickShortcut', 'appLock']
+const LOCAL_ONLY_SETTINGS = ['autoRunCommand', 'quickShortcut', 'appLock', 'license', '_trialStartedAt']
 
 function sanitizeRemoteSettings (remoteSettings = {}, localSettings = {}) {
   const merged = { ...(remoteSettings || {}) }

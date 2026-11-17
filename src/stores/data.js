@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { nextOccurrence, repeatAnchor } from '../utils/repeat'
 import { todayISO } from '../utils/date'
+import { PRO } from '../pro'
 
 let seq = 0
 function genId (prefix) {
@@ -25,11 +26,16 @@ export const useDataStore = defineStore('data', {
     viewMode: 'list', // 'list' | 'calendar'
     selectedTaskId: null,
     search: '',
-    syncState: null
+    syncState: null,
+    // 授权能力（主进程 capabilities 下发）：Pro 视图/派发 UI 的运行时门控依据
+    proInfo: null, // { machineCode, activated, name, expiresAt, trial: { active, daysLeft } }
+    extAvailable: false // 扩展通道（完整版构建注入后为 true）
   }),
 
   getters: {
     activeLists: s => s.lists.filter(l => !l.deletedAt).sort((a, b) => a.order - b.order),
+    // Pro 运行时门控：完整版构建下「已激活或试用期内」为 true（proInfo 未到位时先放行，避免启动闪灰）
+    proActive: s => PRO && (!s.proInfo || !!s.proInfo.activated || !!(s.proInfo.trial && s.proInfo.trial.active)),
     selectedTask: s => s.tasks.find(t => t.id === s.selectedTaskId) || null,
     viewTitle (s) {
       if (s.view.type === 'list') {
@@ -52,6 +58,16 @@ export const useDataStore = defineStore('data', {
       this.settings.pomodoro = this.mergePomodoroSettings(doc.settings?.pomodoro)
       this.syncState = doc.syncState || null
       this.loaded = true
+      this.refreshCapabilities()
+    },
+
+    /** 拉取主进程能力标志（extension 通道 + 授权状态），capabilities/激活后均可重拉 */
+    async refreshCapabilities () {
+      try {
+        const c = await window.api.capabilities()
+        this.proInfo = c.license || null
+        this.extAvailable = !!c.extension
+      } catch { /* 无 api 环境（探针）静默 */ }
     },
 
     persist () {

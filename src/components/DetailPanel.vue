@@ -284,7 +284,9 @@ function onWindowPaste (e) {
   if (!task.value) return
   if (imageFromClipboard(e)) onPaste(e)
 }
-
+onMounted(() => {
+  window.addEventListener('paste', onWindowPaste)
+})
 onBeforeUnmount(() => window.removeEventListener('paste', onWindowPaste))
 </script>
 

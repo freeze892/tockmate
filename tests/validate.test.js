@@ -68,4 +68,14 @@ describe('sanitizeRemoteSettings 仅本机键', () => {
     expect(sanitizeRemoteSettings(undefined, undefined)).toEqual({})
     expect(LOCAL_ONLY_SETTINGS).toContain('autoRunCommand')
   })
+  it('授权与试用见证仅本机（license/_trialStartedAt 远端值不落地）', () => {
+    const local = { license: { code: 'LOCAL-CODE' }, _trialStartedAt: 111, theme: 'light' }
+    const remote = { license: { code: 'REMOTE-CODE' }, _trialStartedAt: 222, theme: 'dark' }
+    const out = sanitizeRemoteSettings(remote, local)
+    expect(out.license).toEqual({ code: 'LOCAL-CODE' })
+    expect(out._trialStartedAt).toBe(111)
+    expect(out.theme).toBe('dark')
+    const out2 = sanitizeRemoteSettings({ license: { code: 'REMOTE-CODE' } }, {})
+    expect(out2.license).toBeUndefined()
+  })
 })

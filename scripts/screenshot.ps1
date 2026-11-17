@@ -1,4 +1,4 @@
-param([string]$Out = "D:/ai-workspace/tickmate/.acceptance/13-通知截图.png")
+param([string]$Out = "$PSScriptRoot/../.acceptance/13-通知截图.png")
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 $b = [System.Windows.Forms.SystemInformation]::VirtualScreen

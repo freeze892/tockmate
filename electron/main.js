@@ -9,6 +9,10 @@ const backup = require('./backup')
 const { hashPassword, verifyPassword } = require('./lock-crypto')
 const { isSafeId } = require('./validate')
 const widget = require('./widget')
+const licenseLib = require('./license-crypto')
+
+// 完整版开关：授权/试用与 Pro 门控仅完整版构建生效；公开核心版由 publish-public 精确串变换置为 false
+const LICENSE_PRO = false
 
 // 品牌名由 electron-builder.yml 的 productName 驱动（朋友体验版 TickList / 正式版 TockMate）
 // 本应用为纯 2D 界面：禁用 GPU 硬件加速，规避部分显卡驱动下"首帧之后
@@ -54,6 +58,72 @@ let quitting = false
 let appLocked = false
 let extChannel = null // 可选扩展模块（完整版构建注入后非空）
 const store = new DataStore(app)
+
+// ── 授权（License）：ed25519 离线激活 + 机器码绑定 + 14 天试用 ──
+// 试用锚点独立于 data.json（不随同步/导入流转）；数据文件内 _trialStartedAt 作第二见证，
+// 二者取更早者——单独删掉任一处都无法重置试用期。lastSeen 单调推进防回拨时钟
+let machineCode = null
+let licenseGate = { activated: false, trialActive: true } // 主进程侧 Pro 门控（派发通道等使用）
+function trialAnchorPath () { return path.join(app.getPath('userData'), 'trial-anchor.json') }
+function loadTrialAnchor () {
+  try {
+    const a = JSON.parse(fs.readFileSync(trialAnchorPath(), 'utf8'))
+    if (a && Number(a.startedAt) > 0) return { startedAt: Number(a.startedAt), lastSeen: Number(a.lastSeen) || 0 }
+  } catch { /* 首启或损坏 → 按全新试用重建 */ }
+  return null
+}
+function saveTrialAnchor (a) {
+  try { fs.writeFileSync(trialAnchorPath(), JSON.stringify(a)) } catch (err) { console.warn('[license] 锚点写入失败:', String(err && err.message || err)) }
+}
+async function ensureMachineCode () {
+  if (!machineCode) {
+    machineCode = licenseLib.formatMachineCode(licenseLib.digestMachineCode(await licenseLib.readMachineGuid()))
+    console.log('[license] 本机机器码:', machineCode)
+  }
+  return machineCode
+}
+/** 读取试用状态并推进 lastSeen（锚点缺失则按现在落盘；激活状态由 settings.license 驱动） */
+function advanceTrial () {
+  const now = Date.now()
+  const existed = loadTrialAnchor()
+  const a = existed || { startedAt: now, lastSeen: now }
+  const witnessed = Number(store.getData().settings?._trialStartedAt)
+  if (witnessed > 0 && witnessed < a.startedAt) a.startedAt = witnessed
+  const trial = licenseLib.computeTrial(a, now)
+  a.lastSeen = Math.max(a.lastSeen, now)
+  if (!existed || a.lastSeen !== existed.lastSeen || a.startedAt !== existed.startedAt) {
+    saveTrialAnchor({ startedAt: a.startedAt, lastSeen: a.lastSeen })
+  }
+  if (witnessed <= 0 || witnessed > a.startedAt) {
+    const doc = store.getData()
+    doc.settings = doc.settings || {}
+    doc.settings._trialStartedAt = a.startedAt
+    doc.settings._updatedAt = now
+    store.setData(doc)
+    store.saveNow(doc)
+  }
+  return trial
+}
+function applyLicenseGate (info) {
+  licenseGate = { activated: !!info.activated, trialActive: !!(info.trial && info.trial.active) }
+}
+/** 主进程侧 Pro 是否解锁（试用期内或已激活；公开核心版恒 false 但其本就无 Pro 代码） */
+function proUnlocked () {
+  return LICENSE_PRO && (licenseGate.activated || licenseGate.trialActive)
+}
+async function licenseInfo () {
+  const mc = await ensureMachineCode()
+  const trial = advanceTrial()
+  const code = store.getData().settings?.license?.code
+  const v = code ? licenseLib.verifyLicenseCode(code, licenseLib.parseMachineCode(mc)) : null
+  return {
+    machineCode: mc,
+    activated: !!(v && v.ok),
+    name: v && v.ok ? (v.payload.n || '') : '',
+    expiresAt: v && v.ok ? (v.payload.e || null) : null,
+    trial
+  }
+}
 
 // ── 任务图片附件 ─────────────────────────────────────────────────
 // taskId 拼路径前必须过白名单：导入/同步的文档可携带任意 id，防路径穿越
@@ -611,6 +681,32 @@ ipcMain.handle('attachment:export', async (_e, { taskId }) => {
 })
 
 ipcMain.handle('app:version', () => app.getVersion())
+// 能力标志：渲染层据此显隐可选能力（标准构建恒为 false）
+ipcMain.handle('app:capabilities', async () => ({
+  extension: !!extChannel,
+  license: LICENSE_PRO ? await licenseInfo() : null
+}))
+
+// ── 授权激活 ─────────────────────────────────────────────────────
+ipcMain.handle('license:activate', async (_e, code) => {
+  if (!LICENSE_PRO) return { ok: false, reason: '本版本无需激活' }
+  const clean = String(code || '').replace(/\s+/g, '')
+  if (!clean) return { ok: false, reason: '请先粘贴激活码' }
+  const mc = await ensureMachineCode()
+  const v = licenseLib.verifyLicenseCode(clean, licenseLib.parseMachineCode(mc))
+  if (!v.ok) return { ok: false, reason: v.reason }
+  const doc = store.getData()
+  doc.settings = doc.settings || {}
+  doc.settings.license = { code: clean }
+  doc.settings._updatedAt = Date.now()
+  store.setData(doc)
+  store.saveNow(doc)
+  broadcast('data:changed', doc)
+  applyLicenseGate(await licenseInfo())
+  console.log('[license] 激活成功:', v.payload.m, v.payload.n || '')
+  return { ok: true }
+})
+ipcMain.handle('license:status', async () => (LICENSE_PRO ? licenseInfo() : null))
 ipcMain.handle('update:check', async () => {
   const manifestUrl = 'https://raw.githubusercontent.com/freeze892/tockmate/main/latest.json'
   try {
@@ -660,14 +756,15 @@ if (!gotLock) {
   app.quit()
 } else {
   app.on('second-instance', () => showWindow())
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     migrateLegacyData()
     store.load()
     // 可选扩展模块：electron/extension.js 由完整版构建注入；标准检出无此文件
     try {
       const ext = require('./extension')
       extChannel = ext.mount({
-        getTasks: () => (store.getData().tasks || []),
+        // 试用期结束且未激活时派发通道静默（Pro 门控）；任务数据原样保留
+        getTasks: () => (proUnlocked() ? (store.getData().tasks || []) : []),
         userDataDir: app.getPath('userData'),
         getSetting: (k) => store.getData().settings?.[k]
       })
@@ -678,6 +775,16 @@ if (!gotLock) {
     }
     // 应用锁：启用则启动即锁定（冒烟模式自动解锁以便探针验证）
     appLocked = !!store.getData().settings?.appLock?.enabled && !process.env.ELECTRON_SMOKE
+
+    // 授权初始化（完整版）：落盘试用锚点 + 刷新 Pro 门控（公开核心版整体缺席）
+    if (LICENSE_PRO) {
+      try {
+        applyLicenseGate(await licenseInfo())
+        console.log('[license] Pro 门控:', licenseGate.activated ? '已激活' : (licenseGate.trialActive ? '试用中' : '试用已结束'))
+      } catch (err) {
+        console.warn('[license] 初始化失败:', String(err && err.message || err))
+      }
+    }
 
     // 同步诊断模式：TICKMATE_PROBE_SYNC=1 探测权限；=sync 执行完整同步并输出结果
     if (process.env.TICKMATE_PROBE_SYNC) {

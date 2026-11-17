@@ -1,4 +1,4 @@
-param([string]$Dir = "D:/ai-workspace/tickmate/.acceptance", [int]$Count = 30, [int]$IntervalMs = 900)
+param([string]$Dir = "$PSScriptRoot/../.acceptance", [int]$Count = 30, [int]$IntervalMs = 900)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
